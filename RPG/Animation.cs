@@ -49,7 +49,6 @@ namespace RPG
             if (velocity.X > 0) // Moving right
                 row = 3;
 
-
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, (row - 1) * frameHeight, frameWidth, frameHeight);
             spriteBatch.Draw(spriteSheet, position, sourceRect, Color.White);
         }

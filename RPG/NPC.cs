@@ -14,7 +14,6 @@ namespace RPG
     {
         private NPCAnimation npcAnimation;
         public Microsoft.Xna.Framework.Vector2 position;
-        public Microsoft.Xna.Framework.Rectangle Bounds => new Microsoft.Xna.Framework.Rectangle((int)position.X, (int)position.Y, npcAnimation.frameWidth, npcAnimation.frameHeight);
 
         public NPC(Texture2D spriteSheet, Microsoft.Xna.Framework.Vector2 position, int frameWidth, int frameHeight)
         {
@@ -22,12 +21,9 @@ namespace RPG
             npcAnimation = new NPCAnimation(spriteSheet, frameWidth, frameHeight);
         }
 
-   
-
         public void Draw(SpriteBatch spriteBatch)
         {
             npcAnimation.Draw(spriteBatch, position); 
         }
-
     }
 }

@@ -11,6 +11,10 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Content\1\dialoge1_1.png" />
+    <None Remove="Content\1\dialoge1_10.png" />
+    <None Remove="Content\1\dialoge1_11.png" />
+    <None Remove="Content\1\dialoge1_2.png" />
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
   </ItemGroup>
