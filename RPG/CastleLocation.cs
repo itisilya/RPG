@@ -1,92 +1,70 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RPG
 {
     public class CastleLocation
     {
         private Texture2D backgroundTexture;
-        
         private NPC king;
         private Rectangle kingBounds;
-
-        private Animation player;
-        private Vector2 playerPosition;
-        private float playerSpeed = 2.7f;
-        private Vector2 playerVelocity;
-        private Rectangle playerBounds;
-
-        Texture2D[] dialogTextures;
-        int currentDialogIndex = 0;
-        bool isDialogActive = false;
-        public bool isDialogTold = false;
-        bool isSpacePressed = false;
+        private Texture2D[] kingDialogTextures;
         private static Texture2D hintTexture;
+        private int currentDialogIndex = 0;
+        private bool isDialogActive = false;
+        private bool isDialogTold = false;
+        private double dialogTimer = 0;
+        private double dialogInterval = 500;
+        private bool isSpacePressed = false;
 
-        double dialogTimer = 0;
-        double dialogInterval = 500;
         public void LoadContent(ContentManager content)
         {
-          
             backgroundTexture = content.Load<Texture2D>("background2");
             king = new NPC(content.Load<Texture2D>("king"), new Vector2(300, 300), 32, 32);
-            player = new Animation(content.Load<Texture2D>("male"), 32, 32);
-            playerPosition = new Vector2(50, 300);
-            int dialogFrameCount1 = 17;
-            dialogTextures = new Texture2D[dialogFrameCount1];
-            for (int i = 0; i < dialogFrameCount1; i++)
-                dialogTextures[i] = content.Load<Texture2D>($"2/dialoge{i + 1}");
+            kingBounds = new Rectangle((int)king.position.X, (int)king.position.Y, 32, 32);
 
+            int dialogFrameCount = 17;
+            kingDialogTextures = new Texture2D[dialogFrameCount];
+            for (int i = 0; i < dialogFrameCount; i++)
+                kingDialogTextures[i] = content.Load<Texture2D>($"2/dialoge{i + 1}");
+            
             hintTexture = content.Load<Texture2D>("hint2");
         }
 
-        public void Update(GameTime gameTime, KeyboardState keyboardState)
+        public void Update(GameTime gameTime, ref Vector2 playerPosition, ref bool isThirdLocation)
         {
-            var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Vector2 oldPosition = playerPosition;
-            playerVelocity = Vector2.Zero;
             var keyboard = Keyboard.GetState();
-            if (keyboard.IsKeyDown(Keys.A))
+            // Boundary check
+            if (playerPosition.Y > 650 - 32 && isDialogTold)  // Assuming the bottom boundary
             {
-                playerVelocity.X -= 1;
-                player.Update(gameTime);
+                isThirdLocation = true;
+                playerPosition = new Vector2(500, 500);  // Position when entering the third location
             }
-            if (keyboard.IsKeyDown(Keys.D))
-            {
-                playerVelocity.X += 1;
-                player.Update(gameTime);
-            }
-            if (keyboard.IsKeyDown(Keys.W))
-            {
-                playerPosition.Y -= playerSpeed;
-                player.Update(gameTime);
-            }
-            if (keyboard.IsKeyDown(Keys.S))
-            {
-                playerPosition.Y += playerSpeed;
-                player.Update(gameTime);
-            }
-            playerPosition += playerVelocity * playerSpeed;
 
-            playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 32, 32);
+            Rectangle playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 32, 32);
             kingBounds = new Rectangle((int)king.position.X, (int)king.position.Y, 32, 32);
+            
+            Rectangle interactionKingZone = new Rectangle(
+                kingBounds.X - 10, kingBounds.Y - 10,
+                kingBounds.Width + 20, kingBounds.Height + 20);
+            // Dialog logic
+            if (playerBounds.Intersects(interactionKingZone) && !isDialogActive)
+                isDialogActive = true;
 
-            if (playerBounds.Intersects(kingBounds)) isDialogActive = true;
             dialogTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-            keyboardState = Keyboard.GetState();
-            bool spaceKeyPressed = keyboardState.IsKeyDown(Keys.Space);
+
+            bool spaceKeyPressed = keyboard.IsKeyDown(Keys.Space);
             if (isDialogActive && spaceKeyPressed && !isSpacePressed && dialogTimer >= dialogInterval)
             {
                 currentDialogIndex++;
-                if (currentDialogIndex >= dialogTextures.Length)
+                if (currentDialogIndex >= kingDialogTextures.Length)
                 {
                     isDialogActive = false;
                     isDialogTold = true;
@@ -96,31 +74,24 @@ namespace RPG
             }
             isSpacePressed = spaceKeyPressed;
         }
-        public void Draw(SpriteBatch spriteBatch, GraphicsDevice graphicsDevice)
+
+        public void Draw(SpriteBatch spriteBatch, Vector2 playerPosition, Animation playerAnimation, Vector2 playerVelocity)
         {
             spriteBatch.Draw(backgroundTexture, Vector2.Zero, Color.White);
-            player.Draw(spriteBatch, playerPosition, playerVelocity);
+            playerAnimation.Draw(spriteBatch, playerPosition, playerVelocity);
             king.Draw(spriteBatch);
+
             if (isDialogActive && !isDialogTold)
             {
-                int dialogSpriteWidth = dialogTextures[currentDialogIndex].Width / 2;
-                int dialogSpriteHeight = dialogTextures[currentDialogIndex].Height / 2;
-                int windowWidth = graphicsDevice.Viewport.Width;
-                int windowHeight = graphicsDevice.Viewport.Height;
+                int dialogSpriteWidth = kingDialogTextures[currentDialogIndex].Width / 2;
+                int dialogSpriteHeight = kingDialogTextures[currentDialogIndex].Height / 2;
 
-                Vector2 dialogPosition = new Vector2(
-                    (windowWidth - dialogSpriteWidth) / 2,  // wентрирование по горизонтали
-                    windowHeight - dialogSpriteHeight - 7 // Размещение внизу, отступ 7 пикселей от нижнего края
-                );
-                spriteBatch.Draw(dialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+                Vector2 dialogPosition = new Vector2 ((780 - dialogSpriteWidth) / 2, 650 - dialogSpriteHeight - 7);
+                spriteBatch.Draw(kingDialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
             }
 
-            if (isDialogTold)
-            {
-                int windowWidth = graphicsDevice.Viewport.Width;
-              
-                spriteBatch.Draw(hintTexture, new Vector2((windowWidth - hintTexture.Width) / 2, 10), Color.White);
-            }
+            if (isDialogTold) 
+                spriteBatch.Draw(hintTexture, new Vector2((780 - hintTexture.Width) / 2, 10), Color.White);
         }
     }
 }

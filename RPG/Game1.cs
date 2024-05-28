@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Net.NetworkInformation;
+using System.Reflection.Metadata;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Intrinsics.X86;
 using static System.Formats.Asn1.AsnWriter;
@@ -13,9 +15,17 @@ namespace RPG
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private Texture2D backgroundTexture;
+        
+        //игрок
+        private Texture2D player;
+        private Vector2 playerPosition;
+        private Vector2 playerVelocity;
+        private Rectangle playerBounds;
         public Animation playerAnimation;
+        private float playerSpeed = 2.7f;
 
         Texture2D[] dialogTextures;
+
         int currentDialogIndex = 0;
         bool isDialogActive = false;
         public bool isDialogTold = false;
@@ -27,19 +37,29 @@ namespace RPG
         private static Texture2D hintTexture;
         private static Texture2D hintTexture0;
 
-        private Texture2D player;
-        private Vector2 playerPosition;
-        private Vector2 playerVelocity;
-        private Rectangle playerBounds;
-        private float playerSpeed = 2.7f;
 
         private NPC daughter;
         private Rectangle daughterBounds;
 
-        private bool isSecondLocation = false;
-        private CastleLocation castleLocation;
+        private enum Location
+        {
+            FirstLocation,
+            SecondLocation,
+            ThirdLocation,
+            FourthLocation,
+            FifthLocation
+        }
 
-        public Game1()
+        private Location currentLocation;
+        private CastleLocation castleLocation;
+        private FieldLocation fieldLocation;
+        private MountainLocation mountainLocation;
+        private FinalLocation finalLocation;
+        private bool isSecondLocation = false;
+
+       
+
+         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -67,6 +87,7 @@ namespace RPG
             daughter = new NPC(Content.Load<Texture2D>("daughter"), new Vector2(100, 100), 32, 32);
             daughterBounds = new Rectangle((int)daughter.position.X, (int)daughter.position.Y, 32, 32);
 
+
             int dialogFrameCount1 = 11;
             dialogTextures = new Texture2D[dialogFrameCount1];
             for (int i = 0; i < dialogFrameCount1; i++)
@@ -74,83 +95,142 @@ namespace RPG
 
             hintTexture = Content.Load<Texture2D>("hint");
             hintTexture0 = Content.Load<Texture2D>("hint0");
+
+            
             castleLocation = new CastleLocation();
             castleLocation.LoadContent(Content);
+
+            fieldLocation = new FieldLocation();
+            fieldLocation.LoadContent(Content);
+
+            mountainLocation = new MountainLocation();
+            mountainLocation.LoadContent(Content);
+
+            finalLocation = new FinalLocation();
+            finalLocation.LoadContent(Content);
+
         }
 
+        public void PlayerMoves(KeyboardState k, GameTime gm)
+        {
+            if (k.IsKeyDown(Keys.A))
+            {
+                playerVelocity.X -= 1;
+                playerAnimation.Update(gm);
+            }
+            if (k.IsKeyDown(Keys.D))
+            {
+                playerVelocity.X += 1;
+                playerAnimation.Update(gm);
+            }
+            if (k.IsKeyDown(Keys.W))
+            {
+                playerVelocity.Y -= 1;
+                playerAnimation.Update(gm);
+            }
+            if (k.IsKeyDown(Keys.S))
+            {
+                playerVelocity.Y += 1;
+                playerAnimation.Update(gm);
+            }
+            playerPosition += playerVelocity * playerSpeed;
+        }
+
+        public void DialogLogic(bool k)
+        {
+            if (isDialogActive && k && !isSpacePressed && dialogTimer >= dialogInterval)
+            {
+                currentDialogIndex++;
+                if (currentDialogIndex >= dialogTextures.Length)
+                {
+                    isDialogActive = false;
+                    isDialogTold = true;
+                    currentDialogIndex = 0;
+                }
+                dialogTimer = 0;
+            }
+            isSpacePressed = k;
+        }
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             var keyboard = Keyboard.GetState();
-            if (!isSecondLocation)
+
+            switch (currentLocation)
             {
-                Vector2 oldPosition = playerPosition;
-                playerVelocity = Vector2.Zero;
-                
-                if (keyboard.IsKeyDown(Keys.A))
-                {
-                    playerVelocity.X -= 1;
-                    playerAnimation.Update(gameTime);
-                }
-                if (keyboard.IsKeyDown(Keys.D))
-                {
-                    playerVelocity.X += 1;
-                    playerAnimation.Update(gameTime);
-                }
-                if (keyboard.IsKeyDown(Keys.W))
-                {
-                    playerPosition.Y -= playerSpeed;
-                    playerAnimation.Update(gameTime);
-                }
-                if (keyboard.IsKeyDown(Keys.S))
-                {
-                    playerPosition.Y += playerSpeed;
-                    playerAnimation.Update(gameTime);
-                }
-                playerPosition += playerVelocity * playerSpeed;
-                
-                if (playerPosition.X > GraphicsDevice.Viewport.Width - 32 && isDialogTold)
-                {
-                    isSecondLocation = true;
-                    playerPosition = new Vector2(50, GraphicsDevice.Viewport.Height / 2); // Позиция игрока при входе на вторую локацию
-                }
+                case Location.FirstLocation:
+                    Vector2 oldPosition = playerPosition;
+                    playerVelocity = Vector2.Zero;
 
-                playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 20, 20);
-                var housesBounds = new Rectangle(162, 22, 600, 308);
-                if (Collide(playerBounds, daughterBounds)
-                    || Collide(playerBounds, housesBounds)
-                    || playerPosition.Y < 0
-                    || playerPosition.X < 0
-                    || playerPosition.Y > GraphicsDevice.Viewport.Height - 32)
-                    playerPosition = oldPosition;
+                    PlayerMoves(keyboard, gameTime);
 
-                Rectangle interactionDaughterZone = new Rectangle(
-                daughterBounds.X - 10, daughterBounds.Y - 10,
-                daughterBounds.Width + 20, daughterBounds.Height + 20);
-
-                if (Collide(playerBounds, interactionDaughterZone) && !isDialogActive)
-                    isDialogActive = true;
-                dialogTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-
-                KeyboardState keyboardState = Keyboard.GetState();
-                bool spaceKeyPressed = keyboardState.IsKeyDown(Keys.Space);
-                if (isDialogActive && spaceKeyPressed && !isSpacePressed && dialogTimer >= dialogInterval)
-                {
-                    currentDialogIndex++;
-                    if (currentDialogIndex >= dialogTextures.Length)
+                    if (playerPosition.X > GraphicsDevice.Viewport.Width - 32 && isDialogTold)
                     {
-                        isDialogActive = false;
-                        isDialogTold = true;
-                        currentDialogIndex = 0;
+                        currentLocation = Location.SecondLocation;
+                        playerPosition = new Vector2(50, GraphicsDevice.Viewport.Height / 2); //позиция игрока при входе на вторую локацию
                     }
-                    dialogTimer = 0;
-                }
-                isSpacePressed = spaceKeyPressed;
-            }
-            else
-            {
-                castleLocation.Update(gameTime, keyboard);
+
+                    playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 20, 20);
+                    var housesBounds = new Rectangle(162, 22, 600, 308);
+                    if (Collide(playerBounds, daughterBounds)
+                        || Collide(playerBounds, housesBounds)
+                        || playerPosition.Y < 0
+                        || playerPosition.X < 0
+                        || playerPosition.Y > GraphicsDevice.Viewport.Height - 32)
+                        playerPosition = oldPosition;
+
+                    Rectangle interactionDaughterZone = new Rectangle(
+                    daughterBounds.X - 10, daughterBounds.Y - 10,
+                    daughterBounds.Width + 20, daughterBounds.Height + 20);
+
+                    if (Collide(playerBounds, interactionDaughterZone) && !isDialogActive)
+                        isDialogActive = true;
+                    dialogTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
+
+                    KeyboardState keyboardState = Keyboard.GetState();
+                    bool spaceKeyPressed = keyboardState.IsKeyDown(Keys.Space);
+                    DialogLogic(spaceKeyPressed);
+                    break;
+
+                case Location.SecondLocation:
+                    playerVelocity = Vector2.Zero;
+                    PlayerMoves(keyboard, gameTime);
+                    bool isThirdLocation = false;
+                    castleLocation.Update(gameTime, ref playerPosition, ref isThirdLocation);
+                    if (isThirdLocation)
+                    {
+                        currentLocation = Location.ThirdLocation;
+                        playerPosition = new Vector2(390, 325);
+                    }
+                    break;
+                case Location.ThirdLocation:
+                    bool isFourthLocation = false;
+                    playerVelocity = Vector2.Zero;
+                    PlayerMoves(keyboard, gameTime);
+                    fieldLocation.Update(gameTime, ref playerPosition, ref isFourthLocation);
+                    if (isFourthLocation)
+                    {
+                        currentLocation = Location.FourthLocation;
+                        playerPosition = new Vector2(20, 600);
+                    }
+                   break;
+                case Location.FourthLocation:
+                    bool isFifthLocation = false;
+                    playerVelocity = Vector2.Zero;
+                    PlayerMoves(keyboard, gameTime);
+                    mountainLocation.Update(ref playerPosition, ref isFifthLocation);
+                    if (isFifthLocation)
+                    {
+                        currentLocation = Location.FifthLocation;
+                        playerPosition = new Vector2(20, 510);
+                    }
+                    break;
+                case Location.FifthLocation:
+                    playerVelocity = Vector2.Zero;
+                    PlayerMoves(keyboard, gameTime);
+                    finalLocation.Update(gameTime, ref playerPosition);
+                    break;
             }
             base.Update(gameTime); 
         }
@@ -159,42 +239,50 @@ namespace RPG
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             _spriteBatch.Begin();
-            if (!isSecondLocation)
+            
+            switch (currentLocation)
             {
-                _spriteBatch.Draw(backgroundTexture, Vector2.Zero, Color.White);
+                case Location.FirstLocation:
+                    _spriteBatch.Draw(backgroundTexture, Vector2.Zero, Color.White);
 
-                playerAnimation.Draw(_spriteBatch, playerPosition, playerVelocity);
+                    playerAnimation.Draw(_spriteBatch, playerPosition, playerVelocity);
 
-                daughter.Draw(_spriteBatch);
+                    daughter.Draw(_spriteBatch);
+                    if (!isDialogActive) _spriteBatch.Draw(hintTexture0, new Vector2((780 - hintTexture.Width) / 2, 10), Color.White);
+                    if (isDialogActive && !isDialogTold)
+                    {
+                        int dialogSpriteWidth = dialogTextures[currentDialogIndex].Width / 2;
+                        int dialogSpriteHeight = dialogTextures[currentDialogIndex].Height / 2;
 
-                int windowWidth = GraphicsDevice.Viewport.Width;
-                int windowHeight = GraphicsDevice.Viewport.Height;
-                if (!isDialogActive) _spriteBatch.Draw(hintTexture0, new Vector2((windowWidth - hintTexture.Width) / 2, 10), Color.White);
-                if (isDialogActive && !isDialogTold)
-                {
-                    int dialogSpriteWidth = dialogTextures[currentDialogIndex].Width / 2;
-                    int dialogSpriteHeight = dialogTextures[currentDialogIndex].Height / 2;
-                    
+                        Vector2 dialogPosition = new Vector2(
+                            (780 - dialogSpriteWidth) / 2,  // wентрирование по горизонтали
+                            650 - dialogSpriteHeight - 7 // Размещение внизу, отступ 7 пикселей от нижнего края
+                        );
+                        _spriteBatch.Draw(dialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+                    }
 
-                    Vector2 dialogPosition = new Vector2(
-                        (windowWidth - dialogSpriteWidth) / 2,  // wентрирование по горизонтали
-                        windowHeight - dialogSpriteHeight - 7 // Размещение внизу, отступ 7 пикселей от нижнего края
-                    );
-                    _spriteBatch.Draw(dialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
-                }
+                    if (isDialogTold)
+                    {
+                        _spriteBatch.Draw(hintTexture, new Vector2((780 - hintTexture.Width) / 2, 10), Color.White);
+                    }
+                    break;
 
-                if (isDialogTold)
-                {
-                    
-                    _spriteBatch.Draw(hintTexture, new Vector2((windowWidth - hintTexture.Width) / 2, 10), Color.White);
-                }
-                
+                case Location.SecondLocation:
+                    castleLocation.Draw(_spriteBatch, playerPosition, playerAnimation, playerVelocity);
+                    break;
+                case Location.ThirdLocation:
+                    fieldLocation.Draw(_spriteBatch, playerPosition, playerAnimation, playerVelocity);
+                    break;
+
+                case Location.FourthLocation:
+                    mountainLocation.Draw(_spriteBatch, playerPosition, playerAnimation, playerVelocity);
+                    break;
+
+                case Location.FifthLocation:
+                    finalLocation.Draw(_spriteBatch, playerPosition, playerAnimation, playerVelocity);
+                    break;
             }
-            else
-            {
-                // Отрисовка второй локации
-                castleLocation.Draw(_spriteBatch, GraphicsDevice);
-            }
+            
             _spriteBatch.End();
             base.Draw(gameTime);
         }
