@@ -24,20 +24,20 @@ namespace RPG
         public Animation playerAnimation;
         private float playerSpeed = 2.7f;
 
+        //диалог
         Texture2D[] dialogTextures;
-
         int currentDialogIndex = 0;
         bool isDialogActive = false;
         public bool isDialogTold = false;
         bool isSpacePressed = false;
-
         double dialogTimer = 0;
         double dialogInterval = 500;
 
+        //подсказки
         private static Texture2D hintTexture;
         private static Texture2D hintTexture0;
 
-
+        //дочка короля
         private NPC daughter;
         private Rectangle daughterBounds;
 
@@ -55,11 +55,8 @@ namespace RPG
         private FieldLocation fieldLocation;
         private MountainLocation mountainLocation;
         private FinalLocation finalLocation;
-        private bool isSecondLocation = false;
 
-       
-
-         public Game1()
+        public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -87,7 +84,6 @@ namespace RPG
             daughter = new NPC(Content.Load<Texture2D>("daughter"), new Vector2(100, 100), 32, 32);
             daughterBounds = new Rectangle((int)daughter.position.X, (int)daughter.position.Y, 32, 32);
 
-
             int dialogFrameCount1 = 11;
             dialogTextures = new Texture2D[dialogFrameCount1];
             for (int i = 0; i < dialogFrameCount1; i++)
@@ -96,7 +92,6 @@ namespace RPG
             hintTexture = Content.Load<Texture2D>("hint");
             hintTexture0 = Content.Load<Texture2D>("hint0");
 
-            
             castleLocation = new CastleLocation();
             castleLocation.LoadContent(Content);
 
@@ -108,7 +103,6 @@ namespace RPG
 
             finalLocation = new FinalLocation();
             finalLocation.LoadContent(Content);
-
         }
 
         public void PlayerMoves(KeyboardState k, GameTime gm)
@@ -151,6 +145,7 @@ namespace RPG
             }
             isSpacePressed = k;
         }
+
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -234,7 +229,7 @@ namespace RPG
             }
             base.Update(gameTime); 
         }
-        
+
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -255,8 +250,8 @@ namespace RPG
                         int dialogSpriteHeight = dialogTextures[currentDialogIndex].Height / 2;
 
                         Vector2 dialogPosition = new Vector2(
-                            (780 - dialogSpriteWidth) / 2,  // wентрирование по горизонтали
-                            650 - dialogSpriteHeight - 7 // Размещение внизу, отступ 7 пикселей от нижнего края
+                            (780 - dialogSpriteWidth) / 2,  //центрирование по горизонтали
+                            650 - dialogSpriteHeight - 7 // размещение внизу, отступ 7 пикселей от нижнего края
                         );
                         _spriteBatch.Draw(dialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
                     }

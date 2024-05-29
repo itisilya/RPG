@@ -21,13 +21,12 @@ namespace RPG
             this.frameHeight = frameHeight;
         }
 
-        // Метод для отрисовки одного кадра анимации
+        //метод для отрисовки одного кадра анимации
         public void Draw(SpriteBatch spriteBatch, Vector2 position)
         {
             Rectangle sourceRectangle = new Rectangle(32, 0, frameWidth, frameHeight);
             Rectangle destinationRectangle = new Rectangle((int)position.X, (int)position.Y, frameWidth, frameHeight);
             spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color.White);
-            
         }
     }
 }

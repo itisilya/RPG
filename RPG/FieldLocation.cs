@@ -4,16 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace RPG
 {
-    
-
     public class FieldLocation
-
     {
         private int playerHealth = 30;
         private Texture2D backgroundTexture;
@@ -59,10 +52,8 @@ namespace RPG
                 return;
             }
             var playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 32, 32);
-            Vector2 oldPosition = playerPosition;
 
             List<Skeleton> skeletonsToRemove = new List<Skeleton>();
-            
             double elapsedMilliseconds = gameTime.ElapsedGameTime.TotalMilliseconds;
             lastSkeletonHitTime += elapsedMilliseconds;
 
@@ -79,7 +70,6 @@ namespace RPG
                     }
                 }
 
-
                 if (mouseState.LeftButton == ButtonState.Pressed && skeleton.Bounds.Contains(mouseState.Position))
                 {
                     skeleton.Health -= 2;
@@ -89,9 +79,7 @@ namespace RPG
             }
 
             foreach (var skeletonToRemove in skeletonsToRemove)
-            {
                 skeletons.Remove(skeletonToRemove);
-            }
 
             if (playerPosition.X > 780 - 32 && allDead) 
             {
@@ -130,21 +118,16 @@ namespace RPG
             }
             else
             {
-                if (showRules)
-                    spriteBatch.Draw(ruleTexture, new Vector2(390 - ruleTexture.Width / 2, 325 - ruleTexture.Height / 2), Color.White);
+                if (showRules) spriteBatch.Draw(ruleTexture, new Vector2(390 - ruleTexture.Width / 2, 325 - ruleTexture.Height / 2), Color.White);
                 else
                 {
                     playerAnimation.Draw(spriteBatch, playerPosition, playerVelocity);
                     foreach (var skeleton in skeletons)
                         skeleton.Draw(spriteBatch);
                 }
-
                 if (allDead && !showRules)
-                {
                     spriteBatch.Draw(hintTexture, new Vector2((780 - hintTexture.Width) / 2, 10), Color.White);
-                }
             }
-            
         }
     }
 
@@ -165,25 +148,16 @@ namespace RPG
 
         public void Update(GameTime gameTime, Vector2 playerPosition, List<Skeleton> skeletons)
         {
-            
-
             Vector2 direction = playerPosition - position;
             if (direction.Length() > 0)
-            {
                 direction.Normalize();
-            }
+            
             velocity = direction * speed;
             Vector2 newPosition = position + velocity;
 
-            // Check collisions with other skeletons
             foreach (var skeleton in skeletons)
-            {
                 if (skeleton != this && (CollidesWith(skeleton, newPosition) || CollidesWith(skeleton, playerPosition)))
-                {
-                    // Adjust velocity to prevent overlapping
                     newPosition = position;
-                }
-            }
 
             position = newPosition;
             Bounds.Location = new Point((int)position.X, (int)position.Y);

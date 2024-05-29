@@ -3,11 +3,6 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace RPG
 {
     public class FinalLocation
@@ -68,7 +63,6 @@ namespace RPG
                 isDialogActive = true;
 
             dialogTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-
             var keyboard = Keyboard.GetState();
             bool spaceKeyPressed = keyboard.IsKeyDown(Keys.Space);
             if (isDialogActive && spaceKeyPressed && !isSpacePressed && dialogTimer >= dialogInterval)

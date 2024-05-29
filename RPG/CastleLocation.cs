@@ -2,12 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework;
-
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-
 namespace RPG
 {
     public class CastleLocation
@@ -41,11 +35,10 @@ namespace RPG
         public void Update(GameTime gameTime, ref Vector2 playerPosition, ref bool isThirdLocation)
         {
             var keyboard = Keyboard.GetState();
-            // Boundary check
-            if (playerPosition.Y > 650 - 32 && isDialogTold)  // Assuming the bottom boundary
+            if (playerPosition.Y > 650 - 32 && isDialogTold)
             {
                 isThirdLocation = true;
-                playerPosition = new Vector2(500, 500);  // Position when entering the third location
+                playerPosition = new Vector2(500, 500);
             }
 
             Rectangle playerBounds = new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 32, 32);
@@ -54,12 +47,11 @@ namespace RPG
             Rectangle interactionKingZone = new Rectangle(
                 kingBounds.X - 10, kingBounds.Y - 10,
                 kingBounds.Width + 20, kingBounds.Height + 20);
-            // Dialog logic
+
             if (playerBounds.Intersects(interactionKingZone) && !isDialogActive)
                 isDialogActive = true;
 
             dialogTimer += gameTime.ElapsedGameTime.TotalMilliseconds;
-
             bool spaceKeyPressed = keyboard.IsKeyDown(Keys.Space);
             if (isDialogActive && spaceKeyPressed && !isSpacePressed && dialogTimer >= dialogInterval)
             {
@@ -89,7 +81,6 @@ namespace RPG
                 Vector2 dialogPosition = new Vector2 ((780 - dialogSpriteWidth) / 2, 650 - dialogSpriteHeight - 7);
                 spriteBatch.Draw(kingDialogTextures[currentDialogIndex], dialogPosition, null, Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
             }
-
             if (isDialogTold) 
                 spriteBatch.Draw(hintTexture, new Vector2((780 - hintTexture.Width) / 2, 10), Color.White);
         }

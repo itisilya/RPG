@@ -1,11 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace RPG
 {
     public class Animation
@@ -18,7 +13,6 @@ namespace RPG
 
         private float timer;
         private float interval = 100f;//интервал между сменой фрейма в миллисекундах
-
         public Animation(Texture2D spriteSheet, int frameWidth, int frameHeight)
         {
             this.spriteSheet = spriteSheet;
@@ -41,14 +35,13 @@ namespace RPG
 
         public void Draw(SpriteBatch spriteBatch, Vector2 position, Vector2 velocity, int row = 1)
         {
-            if (velocity.Y > 0) row = 1; //Default row (down)
-            if (velocity.Y < 0) // Moving up
+            if (velocity.Y > 0) row = 1; //вниз
+            if (velocity.Y < 0) //вверх
                 row = 4;
-            if (velocity.X < 0) // Moving left
+            if (velocity.X < 0) //влево
                 row = 2;
-            if (velocity.X > 0) // Moving right
+            if (velocity.X > 0) //вправо
                 row = 3;
-
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, (row - 1) * frameHeight, frameWidth, frameHeight);
             spriteBatch.Draw(spriteSheet, position, sourceRect, Color.White);
         }
